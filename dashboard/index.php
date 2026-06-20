@@ -1,6 +1,20 @@
 <?php
+// 1. MULAI SESSION DAN CEK LOGIN
+session_start();
+
+// Jika belum login, tendang kembali ke halaman login.php
+if (!isset($_SESSION['login'])) {
+    echo "<script>
+            alert('Anda harus login terlebih dahulu!'); 
+            window.location='login.php';
+          </script>";
+    exit;
+}
+
+// 2. KONEKSI DATABASE
 include "../config/koneksi.php";
 
+// 3. QUERY DATA DASHBOARD
 $totalProduk = mysqli_fetch_assoc(mysqli_query($koneksi,"SELECT COUNT(*) total FROM barang"));
 $totalStok = mysqli_fetch_assoc(mysqli_query($koneksi,"SELECT SUM(stok) total FROM barang"));
 $totalTransaksi = mysqli_fetch_assoc(mysqli_query($koneksi,"SELECT COUNT(*) total FROM transaksi"));
@@ -28,8 +42,11 @@ for($i = 1; $i <= 4; $i++) {
         .logo{ font-size:22px; font-weight:700; color:#db2777; margin-bottom:25px; }
         .menu a{ display:flex; align-items:center; gap:10px; padding:12px; margin-bottom:8px; border-radius:12px; text-decoration:none; color:#64748b; font-weight:500; transition:.2s; }
         .menu a:hover{ background:#ffe4ec; color:#db2777; }
+        .menu .logout { margin-top: 30px; color: #e11d48; background: #fff1f2; }
+        .menu .logout:hover { background: #ffe4e6; color: #be123c; }
         .main{ margin-left:260px; padding:30px; }
         h2{ color:#db2777; font-weight:700; }
+        .user-greeting { font-size: 16px; color: #64748b; margin-bottom: 20px; }
         .card-stat{ border:none; border-radius:18px; padding:15px; color:white; position:relative; box-shadow:0 10px 25px rgba(0,0,0,.08); transition:.2s; }
         .bg1{background:linear-gradient(135deg,#f472b6,#ec4899);}
         .bg2{background:linear-gradient(135deg,#f9a8d4,#f472b6);}
@@ -41,7 +58,7 @@ for($i = 1; $i <= 4; $i++) {
 </head>
 <body>
 <div class="sidebar">
-    <div class="logo">🛒 Kasir Pink</div>
+    <div class="logo"><i class="fa-solid fa-cart-shopping"></i> Kasir Pink</div>
     <div class="menu">
         <a href="#">📊 Dashboard</a>
         <a href="../produk">📦 Produk</a>
@@ -49,15 +66,21 @@ for($i = 1; $i <= 4; $i++) {
         <a href="../supplier">🚚 Supplier</a>
         <a href="../transaksi">🧾 Transaksi</a>
         <a href="../laporan">📄 Laporan</a>
+        
+        <a href="logout.php" class="logout"><i class="fa-solid fa-right-from-bracket"></i> Keluar / Logout</a>
     </div>
 </div>
 <div class="main">
     <h2>Dashboard</h2>
+    <div class="user-greeting">
+        Halo, <b><?= $_SESSION['nama_lengkap'] ?? 'Admin'; ?></b>! Selamat datang kembali.
+    </div>
+
     <div class="row mt-4">
-        <div class="col-md-3"><div class="card-stat bg1"><i class="fa fa-box card-icon"></i><h6>Total Produk</h6><h3><?= $totalProduk['total']; ?></h3></div></div>
-        <div class="col-md-3"><div class="card-stat bg2"><i class="fa fa-warehouse card-icon"></i><h6>Total Stok</h6><h3><?= $totalStok['total']; ?></h3></div></div>
-        <div class="col-md-3"><div class="card-stat bg3"><i class="fa fa-receipt card-icon"></i><h6>Transaksi</h6><h3><?= $totalTransaksi['total']; ?></h3></div></div>
-        <div class="col-md-3"><div class="card-stat bg4"><i class="fa fa-money-bill card-icon"></i><h6>Pendapatan</h6><h3>Rp <?= number_format($totalPendapatan['total']); ?></h3></div></div>
+        <div class="col-md-3"><div class="card-stat bg1"><i class="fa fa-box card-icon"></i><h6>Total Produk</h6><h3><?= $totalProduk['total'] ?? 0; ?></h3></div></div>
+        <div class="col-md-3"><div class="card-stat bg2"><i class="fa fa-warehouse card-icon"></i><h6>Total Stok</h6><h3><?= $totalStok['total'] ?? 0; ?></h3></div></div>
+        <div class="col-md-3"><div class="card-stat bg3"><i class="fa fa-receipt card-icon"></i><h6>Transaksi</h6><h3><?= $totalTransaksi['total'] ?? 0; ?></h3></div></div>
+        <div class="col-md-3"><div class="card-stat bg4"><i class="fa fa-money-bill card-icon"></i><h6>Pendapatan</h6><h3>Rp <?= number_format($totalPendapatan['total'] ?? 0, 0, ',', '.'); ?></h3></div></div>
     </div>
     <div class="card p-4 mt-3">
         <h5>📈 Pendapatan per Minggu</h5>
@@ -81,7 +104,7 @@ new Chart(ctx, {
         }]
     },
     options: {
-        scales: { y: { beginAtZero: true, ticks: { callback: function(v) { return 'Rp ' + v.toLocaleString(); } } } }
+        scales: { y: { beginAtZero: true, ticks: { callback: function(v) { return 'Rp ' + v.toLocaleString('id-ID'); } } } }
     }
 });
 </script>
