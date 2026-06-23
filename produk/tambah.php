@@ -1,5 +1,4 @@
 <?php
-
 require_once "../config/koneksi.php";
 
 $error = "";
@@ -15,22 +14,38 @@ if(isset($_POST['simpan'])){
     $id_kategori = mysqli_real_escape_string($koneksi,$_POST['id_kategori']);
     $id_supplier = mysqli_real_escape_string($koneksi,$_POST['id_supplier']);
 
-    $sql = mysqli_query($koneksi,
-        "INSERT INTO barang
-        (nama_barang,harga,stok,id_kategori,id_supplier)
-        VALUES
-        ('$nama','$harga','$stok','$id_kategori','$id_supplier')"
-    );
+    // Cek apakah produk dengan nama yang sama persis sudah ada di database
+    $cek_produk = mysqli_query($koneksi, "SELECT * FROM barang WHERE nama_barang = '$nama'");
 
+    if (mysqli_num_rows($cek_produk) > 0) {
+        // JIKA PRODUK SUDAH ADA: Lakukan proses UPDATE (Stok ditambah, Harga & Kategori & Supplier diperbarui)
+        $sql = mysqli_query($koneksi, 
+            "UPDATE barang 
+             SET harga = '$harga', 
+                 stok = stok + '$stok', 
+                 id_kategori = '$id_kategori', 
+                 id_supplier = '$id_supplier' 
+             WHERE nama_barang = '$nama'"
+        );
+        $pesan_alert = "Produk sudah ada! Stok ditambahkan dan data diperbarui.";
+
+    } else {
+        // JIKA PRODUK BELUM ADA: Lakukan proses INSERT (Tambah data baru)
+        $sql = mysqli_query($koneksi,
+            "INSERT INTO barang (nama_barang, harga, stok, id_kategori, id_supplier)
+             VALUES ('$nama', '$harga', '$stok', '$id_kategori', '$id_supplier')"
+        );
+        $pesan_alert = "Produk baru berhasil ditambahkan.";
+    }
+
+    // Eksekusi redirect jika query (UPDATE atau INSERT) berhasil
     if($sql){
-        // Mengubah redirect ke dashboard.php setelah berhasil simpan
-        echo "<script>alert('Produk berhasil ditambahkan');window.location='index.php';</script>";
+        echo "<script>alert('$pesan_alert');window.location='index.php';</script>";
         exit;
-    }else{
+    } else {
         $error = mysqli_error($koneksi);
     }
 }
-
 ?>
 
 <!DOCTYPE html>
@@ -47,7 +62,6 @@ if(isset($_POST['simpan'])){
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
 
 <style>
-
 /* GLOBAL */
 body{
     font-family:'Poppins',sans-serif;
@@ -130,7 +144,6 @@ label{
     color:#db2777;
     transform:translateY(-2px);
 }
-
 </style>
 
 </head>
@@ -138,85 +151,78 @@ label{
 <body>
 
 <div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            
+            <div class="mb-4">
+                <a href="../dashboard/index.php" class="btn-back">
+                    <i class="fa-solid fa-arrow-left me-2"></i> Kembali ke Dashboard
+                </a>
+            </div>
 
-<div class="row justify-content-center">
+            <div class="glass-card">
+                
+                <div class="text-center mb-4">
+                    <h1 class="title">📦 Tambah Produk</h1>
+                    <p class="subtitle">Input data produk dengan desain modern</p>
+                </div>
 
-<div class="col-lg-8">
+                <?php if($error != ""){ ?>
+                    <div class="alert alert-danger">
+                        <?= $error ?>
+                    </div>
+                <?php } ?>
 
-<div class="mb-4">
-    <a href="../dashboard/index.php" class="btn-back">
-        <i class="fa-solid fa-arrow-left me-2"></i> Kembali ke Dashboard
-    </a>
-</div>
+                <form method="POST">
 
-<div class="glass-card">
+                    <div class="mb-3">
+                        <label>Nama Produk</label>
+                        <input type="text" name="nama_barang" class="form-control" required>
+                    </div>
 
-<div class="text-center mb-4">
+                    <div class="mb-3">
+                        <label>Harga</label>
+                        <input type="number" name="harga" class="form-control" required>
+                    </div>
 
-<h1 class="title">📦 Tambah Produk</h1>
-<p class="subtitle">Input data produk dengan desain modern</p>
+                    <div class="mb-3">
+                        <label>Stok</label>
+                        <input type="number" name="stok" class="form-control" required>
+                    </div>
 
-</div>
+                    <div class="mb-3">
+                        <label>Kategori</label>
+                        <select name="id_kategori" class="form-select" required>
+                            <option value="">-- Pilih Kategori --</option>
+                            <?php while($k=mysqli_fetch_assoc($dataKategori)){ ?>
+                                <option value="<?= $k['id_kategori']; ?>">
+                                    <?= $k['nama_kategori']; ?>
+                                </option>
+                            <?php } ?>
+                        </select>
+                    </div>
 
-<?php if($error != ""){ ?>
-<div class="alert alert-danger">
-<?= $error ?>
-</div>
-<?php } ?>
+                    <div class="mb-4">
+                        <label>Supplier</label>
+                        <select name="id_supplier" class="form-select" required>
+                            <option value="">-- Pilih Supplier --</option>
+                            <?php while($s=mysqli_fetch_assoc($dataSupplier)){ ?>
+                                <option value="<?= $s['id_supplier']; ?>">
+                                    <?= $s['nama_supplier']; ?>
+                                </option>
+                            <?php } ?>
+                        </select>
+                    </div>
 
-<form method="POST">
+                    <button type="submit" name="simpan" class="btn btn-save w-100">
+                        <i class="fa fa-save"></i> Simpan Produk
+                    </button>
 
-<div class="mb-3">
-<label>Nama Produk</label>
-<input type="text" name="nama_barang" class="form-control" required>
-</div>
+                </form>
 
-<div class="mb-3">
-<label>Harga</label>
-<input type="number" name="harga" class="form-control" required>
-</div>
-
-<div class="mb-3">
-<label>Stok</label>
-<input type="number" name="stok" class="form-control" required>
-</div>
-
-<div class="mb-3">
-<label>Kategori</label>
-<select name="id_kategori" class="form-select" required>
-<option value="">-- Pilih Kategori --</option>
-<?php while($k=mysqli_fetch_assoc($dataKategori)){ ?>
-<option value="<?= $k['id_kategori']; ?>">
-<?= $k['nama_kategori']; ?>
-</option>
-<?php } ?>
-</select>
-</div>
-
-<div class="mb-4">
-<label>Supplier</label>
-<select name="id_supplier" class="form-select" required>
-<option value="">-- Pilih Supplier --</option>
-<?php while($s=mysqli_fetch_assoc($dataSupplier)){ ?>
-<option value="<?= $s['id_supplier']; ?>">
-<?= $s['nama_supplier']; ?>
-</option>
-<?php } ?>
-</select>
-</div>
-
-<button type="submit" name="simpan" class="btn btn-save w-100">
-<i class="fa fa-save"></i> Simpan Produk
-</button>
-
-</form>
-
-</div>
-
-</div>
-
-</div>
-
+            </div>
+        </div>
+    </div>
 </div>
 
 </body>

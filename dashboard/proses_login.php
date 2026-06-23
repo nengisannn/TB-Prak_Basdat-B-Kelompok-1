@@ -19,13 +19,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $_SESSION['id_admin'] = $data['id_admin'];
         $_SESSION['nama_lengkap'] = $data['nama_lengkap'];
         
-        // JIKA BERHASIL: Langsung dialihkan ke index.php (Dashboard)
-        echo "<script>
-                alert('Login Berhasil! Selamat datang, " . $data['nama_lengkap'] . "'); 
-                window.location='index.php';
-              </script>";
+        // JIKA BERHASIL: Langsung dialihkan ke index.php (Dashboard) menggunakan PHP Header
+        header("Location: index.php");
+        exit(); // Sangat penting untuk menambahkan exit() setelah header redirect
+        
     } else {
-        // JIKA GAGAL: Dikembalikan ke halaman login.php
+        // JIKA GAGAL: Boleh tetap pakai alert agar user tahu kenapa gagal
         echo "<script>
                 alert('Login Gagal! ID User atau Password salah.'); 
                 window.location='login.php';

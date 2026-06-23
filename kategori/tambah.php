@@ -9,35 +9,54 @@ if(isset($_POST['simpan'])){
         $_POST['nama_kategori']
     );
 
-    $query = mysqli_query(
-        $koneksi,
-        "INSERT INTO kategori
-        (
-            nama_kategori
-        )
-        VALUES
-        (
-            '$nama_kategori'
-        )"
-    );
+    // 1. Cek apakah nama kategori sudah ada di database
+    $cek_kategori = mysqli_query($koneksi, "SELECT * FROM kategori WHERE nama_kategori = '$nama_kategori'");
 
-    if($query){
-
+    if(mysqli_num_rows($cek_kategori) > 0){
+        
+        // JIKA SUDAH ADA: Munculkan peringatan dan hentikan proses simpan
         echo "
         <script>
-            alert('Kategori berhasil ditambahkan');
+            alert('Gagal! Kategori dengan nama \"$nama_kategori\" sudah terdaftar.');
             window.location='index.php'; 
         </script>
         ";
+        exit;
 
-    }else{
+    } else {
 
-        echo "
-        <script>
-            alert('Gagal menambahkan kategori');
-        </script>
-        ";
+        // JIKA BELUM ADA: Lakukan proses INSERT
+        $query = mysqli_query(
+            $koneksi,
+            "INSERT INTO kategori
+            (
+                nama_kategori
+            )
+            VALUES
+            (
+                '$nama_kategori'
+            )"
+        );
 
+        if($query){
+
+            echo "
+            <script>
+                alert('Kategori berhasil ditambahkan');
+                window.location='index.php'; 
+            </script>
+            ";
+            exit;
+
+        }else{
+
+            echo "
+            <script>
+                alert('Gagal menambahkan kategori');
+            </script>
+            ";
+
+        }
     }
 }
 

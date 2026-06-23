@@ -11,35 +11,47 @@ if(isset($_POST['simpan'])){
         $_POST['nama_supplier']
     );
 
-    $simpan = mysqli_query(
-        $koneksi,
-        "INSERT INTO supplier
-        (
-            nama_supplier
-        )
-        VALUES
-        (
-            '$nama_supplier'
-        )"
-    );
+    // 1. Cek apakah nama supplier sudah ada di database
+    $cek_supplier = mysqli_query($koneksi, "SELECT * FROM supplier WHERE nama_supplier = '$nama_supplier'");
 
-    if($simpan){
-
+    if (mysqli_num_rows($cek_supplier) > 0) {
+        
+        // JIKA SUDAH ADA: Munculkan peringatan dan kembalikan ke dashboard (atau hentikan proses)
         echo "
         <script>
-        alert('Supplier berhasil ditambahkan');
+        alert('Gagal! Supplier dengan nama \"$nama_supplier\" sudah terdaftar.');
         window.location='../dashboard/index.php';
         </script>
         ";
-
         exit;
 
-    }else{
+    } else {
+        
+        // JIKA BELUM ADA: Lakukan proses INSERT (Simpan data baru)
+        $simpan = mysqli_query(
+            $koneksi,
+            "INSERT INTO supplier
+            (
+                nama_supplier
+            )
+            VALUES
+            (
+                '$nama_supplier'
+            )"
+        );
 
-        $error = mysqli_error($koneksi);
-
+        if($simpan){
+            echo "
+            <script>
+            alert('Supplier berhasil ditambahkan');
+            window.location='../dashboard/index.php';
+            </script>
+            ";
+            exit;
+        } else {
+            $error = mysqli_error($koneksi);
+        }
     }
-
 }
 
 ?>
