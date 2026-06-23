@@ -104,7 +104,7 @@ if(isset($_POST['simpan'])){
         );
     }
 
-    // PERBAIKAN: REDIRECT KE FOLDER DASHBOARD YANG BENAR BILA BERHASIL
+    // REDIRECT KE FOLDER DASHBOARD
     echo "<script>
         alert('Transaksi berhasil disimpan! Kembalian: Rp " . number_format($kembalian, 0, ',', '.') . "');
         window.location='../dashboard/index.php';
@@ -258,6 +258,14 @@ label{
     font-weight:500;
 }
 
+/* BOX TOTAL BELANJA */
+.box-total {
+    background: rgba(255, 143, 177, 0.15);
+    border: 2px dashed #ff8fb1;
+    border-radius: 15px;
+    padding: 15px;
+}
+
 </style>
 
 </head>
@@ -293,11 +301,11 @@ label{
 <tr>
 
 <td>
-<select name="barang[]" class="form-select" required>
-<option value="">Pilih Produk</option>
+<select name="barang[]" class="form-select select-produk" onchange="hitungTotal()" required>
+<option value="" data-harga="0">Pilih Produk</option>
 
 <?php while($p=mysqli_fetch_assoc($produk)){ ?>
-<option value="<?= $p['id_barang']; ?>">
+<option value="<?= $p['id_barang']; ?>" data-harga="<?= $p['harga']; ?>">
 <?= $p['nama_barang']; ?> - Rp <?= number_format($p['harga'], 0, ',', '.'); ?>
 </option>
 <?php } ?>
@@ -306,7 +314,7 @@ label{
 </td>
 
 <td>
-<input type="number" name="qty[]" class="form-control" min="1" required>
+<input type="number" name="qty[]" class="form-control input-qty" min="1" oninput="hitungTotal()" required>
 </td>
 
 <td>
@@ -321,21 +329,29 @@ label{
 
 </table>
 
-<div class="mb-3">
-<label>Uang Bayar</label>
-<input type="number" name="bayar" class="form-control" min="0" required>
-</div>
-
-<button type="button" class="btn btn-add mb-3" onclick="tambahBaris()">
+<button type="button" class="btn btn-add mb-4" onclick="tambahBaris()">
 <i class="fa fa-plus"></i> Tambah Produk
 </button>
 
-<div class="d-flex justify-content-end">
+<div class="row">
+    <div class="col-md-6 ms-auto">
+        
+        <div class="box-total mb-3 text-end">
+            <h4 class="title mb-0">Total Belanja: Rp <span id="tampilTotal">0</span></h4>
+        </div>
 
-<button type="submit" name="simpan" class="btn btn-warning btn-lg">
-💾 Simpan Transaksi
-</button>
+        <div class="mb-4">
+            <label>Uang Bayar</label>
+            <input type="number" name="bayar" class="form-control form-control-lg" min="0" placeholder="Rp 0" required>
+        </div>
 
+        <div class="d-flex justify-content-end">
+            <button type="submit" name="simpan" class="btn btn-warning btn-lg w-100">
+                💾 Simpan Transaksi
+            </button>
+        </div>
+
+    </div>
 </div>
 
 </form>
@@ -347,28 +363,58 @@ label{
 <script>
 
 function tambahBaris(){
+    let table = document.querySelector("#produkTable tbody");
+    let row = table.rows[0].cloneNode(true);
 
-let table = document.querySelector("#produkTable tbody");
-let row = table.rows[0].cloneNode(true);
+    // Reset nilai pilihan dan qty saat ditambah
+    row.querySelector("select").selectedIndex = 0;
+    row.querySelector("input").value = "";
 
-row.querySelector("select").selectedIndex = 0;
-row.querySelector("input").value = "";
-
-table.appendChild(row);
-
+    table.appendChild(row);
+    
+    // Panggil ulang perhitungan total
+    hitungTotal();
 }
 
 function hapusBaris(btn){
+    let row = btn.parentNode.parentNode;
+    let table = document.querySelector("#produkTable tbody");
 
-let row = btn.parentNode.parentNode;
-let table = document.querySelector("#produkTable tbody");
-
-if(table.rows.length > 1){
-row.remove();
-} else {
-    alert("Minimal harus ada 1 baris produk!");
+    if(table.rows.length > 1){
+        row.remove();
+        // Panggil ulang perhitungan total setelah baris dihapus
+        hitungTotal(); 
+    } else {
+        alert("Minimal harus ada 1 baris produk!");
+    }
 }
 
+// 🌸 FUNGSI HITUNG TOTAL REAL-TIME
+function hitungTotal() {
+    let grandTotal = 0;
+    let rows = document.querySelectorAll("#produkTable tbody tr");
+
+    // Loop semua baris di tabel
+    rows.forEach(function(row) {
+        let select = row.querySelector(".select-produk");
+        let inputQty = row.querySelector(".input-qty");
+
+        let harga = 0;
+        let qty = parseFloat(inputQty.value) || 0;
+
+        // Ambil harga dari atribut data-harga option yang sedang dipilih
+        if (select.selectedIndex > 0) {
+            harga = parseFloat(select.options[select.selectedIndex].getAttribute("data-harga")) || 0;
+        }
+
+        grandTotal += (harga * qty);
+    });
+
+    // Format angka ke format Rupiah (Ribuan)
+    let formatRupiah = new Intl.NumberFormat('id-ID').format(grandTotal);
+    
+    // Tampilkan ke layar
+    document.getElementById("tampilTotal").innerText = formatRupiah;
 }
 
 </script>

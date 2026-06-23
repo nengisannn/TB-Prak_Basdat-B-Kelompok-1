@@ -20,6 +20,27 @@ $data = mysqli_query(
     <style>
         * { font-family: 'Poppins', sans-serif; }
         body { background: #fff5f8; }
+        
+        /* BUTTON BACK TO DASHBOARD */
+        .btn-back {
+            background: white;
+            color: #db2777;
+            border: 2px solid #ff8fb1;
+            border-radius: 12px;
+            padding: 10px 20px;
+            font-weight: 600;
+            transition: .3s;
+            text-decoration: none;
+            display: inline-block;
+            box-shadow: 0 5px 15px rgba(255, 182, 193, .15);
+        }
+        .btn-back:hover {
+            background: #fff1f5;
+            border-color: #db2777;
+            color: #db2777;
+            transform: translateY(-2px);
+        }
+
         .card-custom { border: none; border-radius: 20px; box-shadow: 0 10px 30px rgba(255, 182, 193, 0.25); background: #ffffff; }
         .card-header { background: linear-gradient(135deg, #ff8fb1, #f7a8c4) !important; color: white; border-top-left-radius: 20px !important; border-top-right-radius: 20px !important; }
         .table { vertical-align: middle; }
@@ -32,6 +53,13 @@ $data = mysqli_query(
 <body>
 
 <div class="container py-5">
+
+    <div class="mb-4">
+        <a href="../dashboard/index.php" class="btn-back">
+            <i class="fa-solid fa-arrow-left me-2"></i> Kembali ke Dashboard
+        </a>
+    </div>
+
     <div class="card card-custom">
         <div class="card-header d-flex justify-content-between align-items-center">
             <h4 class="mb-0">🚚 Data Supplier</h4>

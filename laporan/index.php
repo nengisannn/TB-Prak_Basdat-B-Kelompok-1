@@ -60,6 +60,27 @@ body{
     );
 }
 
+/* BUTTON BACK TO DASHBOARD */
+.btn-back{
+    background: white;
+    color:#db2777;
+    border: 2px solid #ff8fb1;
+    border-radius: 12px;
+    padding: 10px 20px;
+    font-weight: 600;
+    transition: .3s;
+    text-decoration: none;
+    display: inline-block;
+    box-shadow: 0 5px 15px rgba(255, 182, 193, .15);
+}
+
+.btn-back:hover{
+    background: #fff1f5;
+    border-color: #db2777;
+    color:#db2777;
+    transform:translateY(-2px);
+}
+
 .card-custom{
     border:none;
     border-radius:20px;
@@ -104,6 +125,22 @@ body{
     color:#db2777;
 }
 
+/* 🌸 FITUR TAMBAHAN: SEMBUNYIKAN TOMBOL SAAT DICETAK */
+@media print {
+    .btn-back, 
+    .btn-dark, 
+    form,
+    .mb-4 {
+        display: none !important;
+    }
+    .total-box {
+        margin-top: 20px !important;
+    }
+    body {
+        background: white !important;
+    }
+}
+
 </style>
 
 </head>
@@ -111,6 +148,12 @@ body{
 <body>
 
 <div class="container py-4">
+
+<div class="mb-4">
+    <a href="../dashboard/index.php" class="btn-back">
+        <i class="fa-solid fa-arrow-left me-2"></i> Kembali ke Dashboard
+    </a>
+</div>
 
 <div class="d-flex justify-content-between align-items-center mb-4">
 
@@ -143,6 +186,7 @@ class="btn btn-dark">
 type="date"
 name="dari"
 class="form-control"
+value="<?= isset($_GET['dari']) ? $_GET['dari'] : ''; ?>"
 required>
 
 </div>
@@ -155,6 +199,7 @@ required>
 type="date"
 name="sampai"
 class="form-control"
+value="<?= isset($_GET['sampai']) ? $_GET['sampai'] : ''; ?>"
 required>
 
 </div>
@@ -183,7 +228,7 @@ class="btn btn-filter w-100">
 <h5>Total Pendapatan</h5>
 
 <h2>
-Rp <?= number_format($totalPendapatan['total'] ?? 0); ?>
+Rp <?= number_format($totalPendapatan['total'] ?? 0, 0, ',', '.'); ?>
 </h2>
 
 </div>
@@ -192,7 +237,7 @@ Rp <?= number_format($totalPendapatan['total'] ?? 0); ?>
 
 <div class="card-body">
 
-<table class="table table-hover">
+<table class="table table-hover mb-0">
 
 <thead>
 
@@ -219,23 +264,29 @@ Rp <?= number_format($totalPendapatan['total'] ?? 0); ?>
 </td>
 
 <td>
-<?= $row['tanggal']; ?>
+<?= date('d M Y', strtotime($row['tanggal'])); ?>
 </td>
 
 <td>
-Rp <?= number_format($row['total_belanja']); ?>
+Rp <?= number_format($row['total_belanja'], 0, ',', '.'); ?>
 </td>
 
 <td>
-Rp <?= number_format($row['bayar']); ?>
+Rp <?= number_format($row['bayar'], 0, ',', '.'); ?>
 </td>
 
 <td>
-Rp <?= number_format($row['kembalian']); ?>
+Rp <?= number_format($row['kembalian'], 0, ',', '.'); ?>
 </td>
 
 </tr>
 
+<?php } ?>
+
+<?php if(mysqli_num_rows($query) == 0){ ?>
+<tr>
+    <td colspan="5" class="text-center text-muted">Belum ada data transaksi pada periode ini.</td>
+</tr>
 <?php } ?>
 
 </tbody>

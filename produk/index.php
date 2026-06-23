@@ -30,6 +30,27 @@ body{
     color:#334155;
 }
 
+/* BUTTON BACK TO DASHBOARD */
+.btn-back{
+    background: white;
+    color:#db2777;
+    border: 2px solid #ff8fb1;
+    border-radius: 12px;
+    padding: 10px 20px;
+    font-weight: 600;
+    transition: .3s;
+    text-decoration: none;
+    display: inline-block;
+    box-shadow: 0 5px 15px rgba(255, 182, 193, .15);
+}
+
+.btn-back:hover{
+    background: #fff1f5;
+    border-color: #db2777;
+    color:#db2777;
+    transform:translateY(-2px);
+}
+
 /* HEADER */
 .header-card{
     background: rgba(255,255,255,.9);
@@ -52,6 +73,7 @@ body{
 .title{
     font-weight: 700;
     color:#db2777;
+    margin-bottom: 0;
 }
 
 /* TABLE */
@@ -121,7 +143,12 @@ body{
 
 <div class="container py-4">
 
-<!-- HEADER -->
+<div class="mb-4">
+    <a href="../dashboard/index.php" class="btn-back">
+        <i class="fa-solid fa-arrow-left me-2"></i> Kembali ke Dashboard
+    </a>
+</div>
+
 <div class="header-card d-flex justify-content-between align-items-center">
 
 <h3 class="title">
@@ -134,10 +161,9 @@ body{
 
 </div>
 
-<!-- TABLE -->
 <div class="table-card">
 
-<table class="table table-hover align-middle">
+<table class="table table-hover align-middle mb-0">
 
 <thead>
 <tr>
