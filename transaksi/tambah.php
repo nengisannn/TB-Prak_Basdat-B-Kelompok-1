@@ -15,14 +15,24 @@ if(isset($_POST['simpan'])){
 
     $grandTotal = 0;
 
+    // 🌸 CEK STOK DAN HITUNG TOTAL
     foreach($barang as $i => $id_barang){
 
         $q = mysqli_fetch_assoc(
             mysqli_query(
                 $koneksi,
-                "SELECT harga FROM barang WHERE id_barang='$id_barang'"
+                "SELECT nama_barang, harga, stok FROM barang WHERE id_barang='$id_barang'"
             )
         );
+
+        // FITUR CEK STOK KURANG (VALIDASI SERVER)
+        if($qty[$i] > $q['stok']) {
+            echo "<script>
+                alert('Transaksi Gagal! Stok untuk produk \"" . $q['nama_barang'] . "\" tidak mencukupi. (Sisa stok: " . $q['stok'] . ")');
+                window.history.back(); 
+            </script>";
+            exit;
+        }
 
         $subtotal = $q['harga'] * $qty[$i];
         $grandTotal += $subtotal;
@@ -30,11 +40,11 @@ if(isset($_POST['simpan'])){
 
     $kembalian = $bayar - $grandTotal;
 
-    // FITUR CEK UANG KURANG
+    // FITUR CEK UANG KURANG (Validasi Server Lapis 2 sebagai pelindung tambahan)
     if($bayar < $grandTotal){
         echo "<script>
             alert('Transaksi Gagal! Uang bayar (Rp " . number_format($bayar, 0, ',', '.') . ") kurang. Total belanja adalah Rp " . number_format($grandTotal, 0, ',', '.') . "');
-            window.location.href = window.location.pathname; 
+            window.history.back(); 
         </script>";
         exit;
     }
@@ -284,7 +294,7 @@ label{
 
 <h2 class="title mb-4">🛒 Transaksi Kasir</h2>
 
-<form method="POST">
+<form method="POST" onsubmit="return validasiPembayaran()">
 
 <table class="table" id="produkTable">
 
@@ -301,12 +311,16 @@ label{
 <tr>
 
 <td>
-<select name="barang[]" class="form-select select-produk" onchange="hitungTotal()" required>
-<option value="" data-harga="0">Pilih Produk</option>
+<select name="barang[]" class="form-select select-produk" onchange="resetQty(this)" required>
+<option value="" data-harga="0" data-stok="0">Pilih Produk</option>
 
-<?php while($p=mysqli_fetch_assoc($produk)){ ?>
-<option value="<?= $p['id_barang']; ?>" data-harga="<?= $p['harga']; ?>">
-<?= $p['nama_barang']; ?> - Rp <?= number_format($p['harga'], 0, ',', '.'); ?>
+<?php 
+// Me-reset pointer agar bisa dibaca berkali-kali oleh JS jika tambah baris
+mysqli_data_seek($produk, 0);
+while($p=mysqli_fetch_assoc($produk)){ 
+?>
+<option value="<?= $p['id_barang']; ?>" data-harga="<?= $p['harga']; ?>" data-stok="<?= $p['stok']; ?>">
+<?= $p['nama_barang']; ?> - Rp <?= number_format($p['harga'], 0, ',', '.'); ?> (Stok: <?= $p['stok']; ?>)
 </option>
 <?php } ?>
 
@@ -314,7 +328,7 @@ label{
 </td>
 
 <td>
-<input type="number" name="qty[]" class="form-control input-qty" min="1" oninput="hitungTotal()" required>
+<input type="number" name="qty[]" class="form-control input-qty" min="1" oninput="cekStok(this)" required>
 </td>
 
 <td>
@@ -342,7 +356,7 @@ label{
 
         <div class="mb-4">
             <label>Uang Bayar</label>
-            <input type="number" name="bayar" class="form-control form-control-lg" min="0" placeholder="Rp 0" required>
+            <input type="number" id="bayarInput" name="bayar" class="form-control form-control-lg" min="0" placeholder="Rp 0" required>
         </div>
 
         <div class="d-flex justify-content-end">
@@ -389,7 +403,38 @@ function hapusBaris(btn){
     }
 }
 
-// 🌸 FUNGSI HITUNG TOTAL REAL-TIME
+// 🌸 FUNGSI RESET QTY SAAT PRODUK DIGANTI
+function resetQty(selectElem) {
+    let row = selectElem.closest('tr');
+    let inputQty = row.querySelector('.input-qty');
+    inputQty.value = ""; // Kosongkan input qty
+    hitungTotal();
+}
+
+// 🌸 FUNGSI VALIDASI STOK REAL-TIME
+function cekStok(inputElem) {
+    let row = inputElem.closest('tr');
+    let select = row.querySelector('.select-produk');
+    
+    // Jika belum pilih produk tapi sudah isi qty
+    if (select.selectedIndex === 0) {
+        alert("Pilih produk terlebih dahulu!");
+        inputElem.value = "";
+        return;
+    }
+
+    let maxStok = parseInt(select.options[select.selectedIndex].getAttribute("data-stok")) || 0;
+    let qty = parseInt(inputElem.value) || 0;
+
+    if (qty > maxStok) {
+        alert("Peringatan: Stok tidak mencukupi! Sisa stok hanya " + maxStok);
+        inputElem.value = maxStok; // Otomatis kembalikan ke maksimal stok
+    }
+
+    hitungTotal();
+}
+
+// FUNGSI HITUNG TOTAL REAL-TIME
 function hitungTotal() {
     let grandTotal = 0;
     let rows = document.querySelectorAll("#produkTable tbody tr");
@@ -415,6 +460,30 @@ function hitungTotal() {
     
     // Tampilkan ke layar
     document.getElementById("tampilTotal").innerText = formatRupiah;
+    
+    // Kembalikan nilai angka aslinya agar bisa dipakai oleh fungsi validasiPembayaran()
+    return grandTotal;
+}
+
+// 🌸 LAPIS 1: CEK UANG BAYAR TANPA REFRESH HALAMAN
+function validasiPembayaran() {
+    let grandTotal = hitungTotal(); // Ambil total belanja secara langsung
+    let bayar = parseFloat(document.getElementById("bayarInput").value) || 0;
+
+    if (bayar < grandTotal) {
+        // Hitung selisih kekurangannya
+        let kurang = grandTotal - bayar;
+        let formatKurang = new Intl.NumberFormat('id-ID').format(kurang);
+        
+        // Tampilkan peringatan
+        alert("Transaksi Gagal! \nUang bayar kurang Rp " + formatKurang);
+        
+        // MENCEGAH FORM DIKIRIM (HALAMAN TIDAK AKAN REFRESH)
+        return false; 
+    }
+
+    // Jika uang cukup, izinkan form dikirim ke PHP
+    return true; 
 }
 
 </script>

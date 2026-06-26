@@ -14,6 +14,15 @@ if(isset($_POST['simpan'])){
     $id_kategori = mysqli_real_escape_string($koneksi,$_POST['id_kategori']);
     $id_supplier = mysqli_real_escape_string($koneksi,$_POST['id_supplier']);
 
+    // 🌸 LAPIS 3 (PHP): Validasi Server untuk Mencegah Nilai Minus Lolos
+    if($harga < 0 || $stok < 0) {
+        echo "<script>
+            alert('GAGAL! Harga dan Stok tidak boleh bernilai minus (negatif).');
+            window.history.back();
+        </script>";
+        exit;
+    }
+
     // Cek apakah produk dengan nama yang sama persis sudah ada di database
     $cek_produk = mysqli_query($koneksi, "SELECT * FROM barang WHERE nama_barang = '$nama'");
 
@@ -182,12 +191,12 @@ label{
 
                     <div class="mb-3">
                         <label>Harga</label>
-                        <input type="number" name="harga" class="form-control" required>
+                        <input type="number" name="harga" class="form-control" min="0" oninput="cektidakMinus(this, 'Harga')" required>
                     </div>
 
                     <div class="mb-3">
                         <label>Stok</label>
-                        <input type="number" name="stok" class="form-control" required>
+                        <input type="number" name="stok" class="form-control" min="0" oninput="cektidakMinus(this, 'Stok')" required>
                     </div>
 
                     <div class="mb-3">
@@ -224,6 +233,16 @@ label{
         </div>
     </div>
 </div>
+
+<script>
+// 🌸 LAPIS 2 (JavaScript): Memberikan peringatan real-time jika mengetik minus
+function cektidakMinus(inputElem, namaField) {
+    if (inputElem.value < 0) {
+        alert("Peringatan! " + namaField + " tidak boleh bernilai minus (-).");
+        inputElem.value = ""; // Mengosongkan kolom jika terdeteksi minus
+    }
+}
+</script>
 
 </body>
 </html>
